@@ -55,16 +55,16 @@ const realContent = ref(null);
 const styleCover = ref(null);
 const realStyle = ref(null);
 
-onMounted(async () => {
-  axios
-    .get("http://localhost:3000/api/test")
-    .then((res) => {
-      console.log(res.data);
-    })
-    .catch((e) => {
-      console.error(e);
-    });
-});
+// onMounted(async () => {
+//   axios
+//     .get("http://localhost:3000/api/test")
+//     .then((res) => {
+//       console.log(res.data);
+//     })
+//     .catch((e) => {
+//       console.error(e);
+//     });
+// });
 
 const handleContentUpload = () => {
   let reader = new FileReader();
@@ -102,7 +102,9 @@ const handleStyleUpload = () => {
 
 const submit = async () => {
   const formData = new FormData();
-  formData.append("file", realContent.value);
+  formData.append("files", realContent.value);
+  formData.append("event", 'styles');
+  formData.append("files", realStyle.value);
   axios
     .post("http://localhost:3000/api/upload", formData, {
       headers: {
@@ -113,7 +115,7 @@ const submit = async () => {
       console.log(res.data);
     })
     .catch((e) => {
-      console.error(e);
+      console.error(e.response.data);
     });
 };
 </script>
