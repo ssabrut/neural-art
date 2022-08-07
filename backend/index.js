@@ -29,18 +29,27 @@ app.get("/api/test", async (req, res) => {
   return res.status(200).send(results);
 })
 
-try {
-  app.post("/api/upload", upload.array('files', 2), async (req, res, next) => {
+app.post("/api/upload", upload.array('files', 2), async (req, res, next) => {
+  try {
     const contentImage = await executeQuery("INSERT INTO content_images (image) VALUES (?)", [req.files[0].filename]);
     const styleImage = await executeQuery("INSERT INTO style_images (image) VALUES (?)", [req.files[1].filename]);
-    return res.status(200).zip([
-      { path: `uploads/${req.query.event1}/${req.files[0].filename}`, name: `${req.files[0].filename}` },
-      { path: `uploads/${req.query.event2}/${req.files[1].filename}`, name: `${req.files[1].filename}` },
+
+    return res.status(200).send([
+      `uploads/${req.query.event1}/${req.files[0].filename}`,
+      `uploads/${req.query.event2}/${req.files[1].filename}`,
     ]);
-  });
-} catch (error) {
-  return res.status(500).send(error.response.data);
-}
+  } catch (e) {
+    return res.status(500).send(e.message);
+  }
+});
+
+app.get('/api/download/', async (req, res) => {
+  try {
+    return res.status(200).download(req.body.path);
+  } catch (e) {
+    return res.status(500).send(e.message);
+  }
+});
 
 app.listen(3000, () => {
   console.log("Listened to port 3000");

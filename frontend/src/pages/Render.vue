@@ -103,19 +103,28 @@ const handleStyleUpload = () => {
 const submit = async () => {
   const formData = new FormData();
   formData.append("files", realContent.value);
-  formData.append("event", 'styles');
   formData.append("files", realStyle.value);
-  axios
-    .post("http://localhost:3000/api/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    })
-    .then((res) => {
-      console.log(res.data);
-    })
-    .catch((e) => {
-      console.error(e.response.data);
-    });
+  
+  const res = await axios.post('http://localhost:3000/api/upload', formData, {
+    params: {
+      event1: "contents",
+      event2: "styles",
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  // const res1 = await axios.get('http://localhost:3000/api/download/', {
+  //   data: {
+  //     path: res.data[0],
+  //   },
+  // });
+
+  // const res2 = await axios.get('http://localhost:3000/api/download/', {
+  //   data: {
+  //     path: res.data[1],
+  //   }
+  // });
 };
 </script>
