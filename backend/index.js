@@ -3,7 +3,7 @@ const app = express();
 const executeQuery = require("./db");
 const cors = require("cors");
 const multer = require("multer");
-const zip = require('express-zip');
+const { spawn } = require("child_process");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -25,8 +25,18 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.get("/api/test", async (req, res) => {
-  const results = await executeQuery("SELECT * FROM content_images");
-  return res.status(200).send(results);
+  var dataToSend = null;
+  const python = spawn("python", ["script.py", 'node.js', 'python']);
+
+  python.stdout.on('data', (data) => {
+    console.log('Piping data from python script...')
+    dataToSend = data.toString();
+  });
+
+  python.on('close', (code) => {
+    console.log('Child process all stdio with code ' + code);
+    return res.status(200).send(dataToSend);
+  });
 })
 
 app.post("/api/upload", upload.array('files', 2), async (req, res, next) => {
@@ -34,13 +44,50 @@ app.post("/api/upload", upload.array('files', 2), async (req, res, next) => {
     const contentImage = await executeQuery("INSERT INTO content_images (image) VALUES (?)", [req.files[0].filename]);
     const styleImage = await executeQuery("INSERT INTO style_images (image) VALUES (?)", [req.files[1].filename]);
 
-    return res.status(200).send([
-      `uploads/${req.query.event1}/${req.files[0].filename}`,
-      `uploads/${req.query.event2}/${req.files[1].filename}`,
-    ]);
+    // redirect to /api/render with paramter content id and style id
+    return res.redirect(`/api/render?content=${contentImage.insertId}&style=${styleImage.insertId}`);
+
   } catch (e) {
     return res.status(500).send(e.message);
   }
+});
+
+app.post('/api/render', async (req, res) => {
+  try {
+    var dataToSend = null;
+    const contentId = req.body.content;
+    const styleId = req.body.style;
+    const contentImage = await executeQuery("SELECT image FROM content_images WHERE id = ?", [contentId]);
+    const styleImage = await executeQuery("SELECT image FROM style_images WHERE id = ?", [styleId]);
+    const contentImagePath = `uploads/contents/${contentImage[0].image}`;
+    const styleImagePath = `uploads/styles/${styleImage[0].image}`;
+    const python = spawn("python", ["script.py", contentImagePath, styleImagePath]);
+
+    python.stdout.on('data', (data) => {
+      console.log('Piping data from python script...')
+      dataToSend = data.toString();
+    });
+
+    python.on('close', (code) => {
+      console.log('Child process all stdio with code ' + code);
+      return res.status(200).send(dataToSend);
+    });
+  } catch (e) {
+    return res.status(500).send(e.message);
+  }
+
+  // var dataToSend = null;
+  // const python = spawn("python", ["script.py", 'node.js', 'python']);
+
+  // python.stdout.on('data', (data) => {
+  //   console.log('Piping data from python script...')
+  //   dataToSend = data.toString();
+  // });
+
+  // python.on('close', (code) => {
+  //   console.log('Child process all stdio with code ' + code);
+  //   return res.status(200).send(dataToSend);
+  // });
 });
 
 app.get('/api/download/', async (req, res) => {
