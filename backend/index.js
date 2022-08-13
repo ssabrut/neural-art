@@ -43,22 +43,19 @@ app.post("/api/upload", upload.array('files', 2), async (req, res, next) => {
   try {
     const contentImage = await executeQuery("INSERT INTO content_images (image) VALUES (?)", [req.files[0].filename]);
     const styleImage = await executeQuery("INSERT INTO style_images (image) VALUES (?)", [req.files[1].filename]);
-
-    // redirect to /api/render with paramter content id and style id
-    return res.redirect(`/api/render?content=${contentImage.insertId}&style=${styleImage.insertId}`);
-
+    const content = contentImage.insertId;
+    const style = styleImage.insertId;
+    req.content = content;
+    req.style = style;
+    next();
   } catch (e) {
     return res.status(500).send(e.message);
   }
-});
-
-app.post('/api/render', async (req, res) => {
+}, async (req, res, next) => {
   try {
     var dataToSend = null;
-    const contentId = req.body.content;
-    const styleId = req.body.style;
-    const contentImage = await executeQuery("SELECT image FROM content_images WHERE id = ?", [contentId]);
-    const styleImage = await executeQuery("SELECT image FROM style_images WHERE id = ?", [styleId]);
+    const contentImage = await executeQuery("SELECT image FROM content_images WHERE id = (?)", [req.content]);
+    const styleImage = await executeQuery("SELECT image FROM style_images WHERE id = (?)", [req.style]);
     const contentImagePath = `uploads/contents/${contentImage[0].image}`;
     const styleImagePath = `uploads/styles/${styleImage[0].image}`;
     const python = spawn("python", ["script.py", contentImagePath, styleImagePath]);
@@ -75,19 +72,6 @@ app.post('/api/render', async (req, res) => {
   } catch (e) {
     return res.status(500).send(e.message);
   }
-
-  // var dataToSend = null;
-  // const python = spawn("python", ["script.py", 'node.js', 'python']);
-
-  // python.stdout.on('data', (data) => {
-  //   console.log('Piping data from python script...')
-  //   dataToSend = data.toString();
-  // });
-
-  // python.on('close', (code) => {
-  //   console.log('Child process all stdio with code ' + code);
-  //   return res.status(200).send(dataToSend);
-  // });
 });
 
 app.get('/api/download/', async (req, res) => {
