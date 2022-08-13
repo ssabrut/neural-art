@@ -167,7 +167,7 @@ class Render:
     return model
   
   @tf.function()
-  def train_step(self, generated_image, content_image, style_image, optimizer=tf.keras.optimizers.Adam(learning_rate=0.01)):    
+  def train_step(self, generated_image, content_image, style_image, optimizer=tf.keras.optimizers.Adam(learning_rate=0.02)):    
     vgg_model_outputs = self.get_layer_outputs(self.vgg, self.STYLE_LAYERS + self.content_layer)
     content_target = self.vgg_model_outputs(content_image)  # Content encoder
     style_targets = self.vgg_model_outputs(style_image)     # Style enconder
@@ -188,7 +188,6 @@ class Render:
 
     optimizer.apply_gradients([(grad, generated_image)])
     generated_image.assign(utils.clip_0_1(generated_image))
-    utils
     return J
 
 if __name__ == '__main__':  
