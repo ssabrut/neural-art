@@ -4,6 +4,7 @@ const executeQuery = require("./db");
 const cors = require("cors");
 const multer = require("multer");
 const { spawn } = require("child_process");
+const path = require("path");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -24,20 +25,30 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.get("/api/test", async (req, res) => {
-  var dataToSend = null;
-  const python = spawn("python", ["script.py", 'node.js', 'python']);
+// app.get("/api/test", async (req, res) => {
+//   var dataToSend = null;
+//   const python = spawn('python', ['script.py', 'node.js', 'python']);
 
-  python.stdout.on('data', (data) => {
-    console.log('Piping data from python script...')
-    dataToSend = data.toString();
-  });
+//   python.stdout.on('data', (data) => {
+//     console.log('Piping data from python script...')
+//     dataToSend = data.toString();
+//   });
 
-  python.on('close', (code) => {
-    console.log('Child process all stdio with code ' + code);
-    return res.status(200).send(dataToSend);
-  });
-})
+//   python.on('close', (code) => {
+//     console.log('Child process all stdio with code ' + code);
+//     return res.status(200).send(dataToSend);
+//   });
+// })
+
+app.get('/api/generated/:id', async (req, res) => {
+  try {
+    const data = await executeQuery('SELECT image FROM generated_images WHERE id = (?)', [req.params.id]);
+    const image = path.join(__dirname, 'uploads/generated/', 'vqfPCEXpAMuqkWim8uMVuOdF.jpg');
+    return res.status(200).download(image);
+  } catch (err) {
+    return res.status(500).send(err);
+  }
+});
 
 app.post("/api/upload", upload.array('files', 2), async (req, res, next) => {
   try {
@@ -63,16 +74,22 @@ app.post("/api/upload", upload.array('files', 2), async (req, res, next) => {
     python.stdout.on('data', (data) => {
       console.log('Piping data from python script...')
       dataToSend = data.toString();
+    }).on('close', async (code) => {
+      console.log('Child process all stdio with code ' + code);
+      const generatedImage = await executeQuery("INSERT INTO generated_images (image) VALUES (?)", [dataToSend]);
+      return res.status(200).send('/generated?id=' + generatedImage.insertId);
     });
 
-    python.on('close', (code) => {
-      console.log('Child process all stdio with code ' + code);
-      return res.status(200).send(dataToSend);
+    python.stderr.on('data', (data) => {
+      console.log('Error: ' + data);
+    }).on('close', (code) => {
+      console.log('Child process all stderr with code ' + code);
     });
   } catch (e) {
     return res.status(500).send(e.message);
   }
 });
+
 
 app.get('/api/download/', async (req, res) => {
   try {

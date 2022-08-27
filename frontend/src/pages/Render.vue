@@ -47,24 +47,15 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 import axios from "axios";
+import { useRouter } from "vue-router";
 
 const contentCover = ref(null);
 const realContent = ref(null);
 const styleCover = ref(null);
 const realStyle = ref(null);
-
-// onMounted(async () => {
-//   axios
-//     .get("http://localhost:3000/api/test")
-//     .then((res) => {
-//       console.log(res.data);
-//     })
-//     .catch((e) => {
-//       console.error(e);
-//     });
-// });
+const router = useRouter();
 
 const handleContentUpload = () => {
   let reader = new FileReader();
@@ -114,6 +105,8 @@ const submit = async () => {
       "Content-Type": "multipart/form-data",
     },
   });
+
+  router.push(res.data);
 
   // const res1 = await axios.get('http://localhost:3000/api/download/', {
   //   data: {
