@@ -67,7 +67,7 @@ const handleContentUpload = () => {
         const contentPlaceholder = document.getElementById("content_placeholder");
         contentPlaceholder.removeChild(contentPlaceholder.firstChild);
         const imagePlaceholder = document.createElement('img');
-        imagePlaceholder.classList.add('w-[384px]', 'h-[384px]', 'object-cover', 'shadow-lg', 'rounded');
+        imagePlaceholder.classList.add('w-[288px]', 'h-[288px]', 'object-cover', 'shadow-lg', 'rounded');
         contentPlaceholder.appendChild(imagePlaceholder).src = e.target.result;
       };
     }
@@ -84,7 +84,7 @@ const handleStyleUpload = () => {
         const stylePlaceholder = document.getElementById("style_placeholder");
         stylePlaceholder.removeChild(stylePlaceholder.firstChild);
         const imagePlaceholder = document.createElement('img');
-        imagePlaceholder.classList.add('w-[384px]', 'h-[384px]', 'object-cover', 'shadow-lg', 'rounded');
+        imagePlaceholder.classList.add('w-[288px]', 'h-[288px]', 'object-cover', 'shadow-lg', 'rounded');
         stylePlaceholder.appendChild(imagePlaceholder).src = e.target.result;
       };
     }
